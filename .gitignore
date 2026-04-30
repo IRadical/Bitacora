@@ -216,3 +216,21 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# Ignorar fotos personales y de trabajo
+fotos/antes/*
+fotos/durante/*
+fotos/despues/*
+!fotos/**/.gitkeep
+
+# Ignorar reportes finales generados
+reportes_finales/*.docx
+reportes_finales/*.pdf
+
+# Ignorar base de datos local
+data/persistencia.json
+
+# Archivos de sistema y entorno
+__pycache__/
+.venv/
