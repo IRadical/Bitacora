@@ -178,5 +178,6 @@ def main(page: ft.Page):
         lbl_status
     )
 
+
 if __name__ == "__main__":
     ft.app(target=main)
