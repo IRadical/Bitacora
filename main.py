@@ -6,6 +6,7 @@ from datetime import datetime
 from docxtpl import DocxTemplate
 from core.procesador import preparar_fotos 
 
+# --- CONFIGURACIÓN ---
 PLANTILLA_NOMBRE = "plantilla_maestra.docx"
 CARPETA_REPORTES = "reportes_finales"
 BASE_DIR = os.path.dirname(__file__)
@@ -19,25 +20,22 @@ def main(page: ft.Page):
     page.title = "Radical - Log Automator"
     page.theme_mode = ft.ThemeMode.DARK
     page.window_width = 600
-    page.window_height = 900
+    page.window_height = 950 # Aumentamos un poco el alto para los nuevos botones
     page.scroll = "auto"
 
     with open(DATA_FILE, 'r', encoding='utf-8') as f:
         datos_json = json.load(f)
 
+    # --- LÓGICA DE ARCHIVOS (IMÁGENES) ---
     def on_file_result(e: ft.FilePickerResultEvent):
         if e.files:
             dest_folder = page.session.get("current_upload")
             target_path = os.path.join(FOTOS_DIR, dest_folder)
-            
-            if not os.path.exists(target_path):
-                os.makedirs(target_path)
-                
+            if not os.path.exists(target_path): os.makedirs(target_path)
             for file in e.files:
                 timestamp = datetime.now().strftime("%H%M%S_%f")
                 filename = f"{timestamp}_{file.name}"
                 shutil.copy(file.path, os.path.join(target_path, filename))
-            
             lbl_status.value = f"{len(e.files)} fotos añadidas a '{dest_folder}'"
             lbl_status.color = ft.colors.GREEN
             page.update()
@@ -45,9 +43,29 @@ def main(page: ft.Page):
     file_picker = ft.FilePicker(on_result=on_file_result)
     page.overlay.append(file_picker)
 
+    # --- LÓGICA DE PLANTILLA ---
+    def on_template_result(e: ft.FilePickerResultEvent):
+        if e.files:
+            try:
+                # Reemplazamos la plantilla maestra con la nueva
+                shutil.copy(e.files[0].path, PLANTILLA)
+                lbl_status.value = f"Plantilla actualizada: {e.files[0].name}"
+                lbl_status.color = ft.colors.GREEN
+            except Exception as ex:
+                lbl_status.value = f"Error al subir plantilla: {ex}"
+                lbl_status.color = ft.colors.RED
+            page.update()
+
+    template_picker = ft.FilePicker(on_result=on_template_result)
+    page.overlay.append(template_picker)
+
     def open_picker(categoria):
         page.session.set("current_upload", categoria)
         file_picker.pick_files(allow_multiple=True, file_type=ft.FilePickerFileType.IMAGE)
+
+    def open_reports_folder(e):
+        if not os.path.exists(REPORTES_DIR): os.makedirs(REPORTES_DIR)
+        os.startfile(REPORTES_DIR) # Abre la carpeta en Windows
 
     def clear_photos(e):
         for cat in CATEGORIAS:
@@ -62,6 +80,7 @@ def main(page: ft.Page):
         lbl_status.color = ft.colors.ORANGE
         page.update()
 
+    # --- COMPONENTES UI ---
     lbl_status = ft.Text("Listo para generar la bitácora", color=ft.colors.BLUE)
     
     txt_horas = ft.TextField(
@@ -106,7 +125,8 @@ def main(page: ft.Page):
             }
             doc.render(contexto)
             
-            nombre_final = f"BITACORA_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
+            fecha_hoy = datetime.now().strftime("%d-%m-%Y")
+            nombre_final = f"BITACORA DE MANTENIMIENTO DE PLANTA DE EMERGENCIA {fecha_hoy}.docx"
             ruta_salida = os.path.join(REPORTES_DIR, nombre_final)
             
             if not os.path.exists(REPORTES_DIR): os.makedirs(REPORTES_DIR)
@@ -123,6 +143,7 @@ def main(page: ft.Page):
             lbl_status.color = ft.colors.RED
         page.update()
 
+    # --- LAYOUT FINAL ---
     page.add(
         ft.Text("LOG AUTOMATOR PRO", size=28, weight="bold"),
         ft.Row([txt_horas, txt_arranques]),
@@ -136,6 +157,22 @@ def main(page: ft.Page):
             build_drop_zone("NIVELES", ft.colors.PURPLE, "niveles"),
         ]),
         ft.Divider(),
+        # Fila de utilidades finales
+        ft.Row([
+            ft.TextButton(
+                "Subir Plantilla", 
+                icon=ft.icons.FILE_UPLOAD_OUTLINED, 
+                on_click=lambda _: template_picker.pick_files(
+                    file_type=ft.FilePickerFileType.CUSTOM, 
+                    allowed_extensions=["docx"]
+                )
+            ),
+            ft.TextButton(
+                "Abrir Carpeta", 
+                icon=ft.icons.FOLDER_OPEN, 
+                on_click=open_reports_folder
+            ),
+        ], alignment=ft.MainAxisAlignment.CENTER),
         ft.FilledButton("GENERAR REPORTE", icon=ft.icons.REPLAY_CIRCLE_FILLED, on_click=process_log, width=600, height=50),
         ft.OutlinedButton("LIMPIAR FOTOS", icon=ft.icons.DELETE_SWEEP, on_click=clear_photos, width=600),
         lbl_status
