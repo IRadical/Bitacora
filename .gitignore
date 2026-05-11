@@ -222,7 +222,9 @@ __marimo__/
 fotos/antes/*
 fotos/durante/*
 fotos/despues/*
+fotos/niveles/*
 !fotos/**/.gitkeep
+
 
 # Ignorar reportes finales generados
 reportes_finales/*.docx
@@ -234,3 +236,8 @@ data/persistencia.json
 # Archivos de sistema y entorno
 __pycache__/
 .venv/
+
+#ignorar plantilla
+*.docx
+
+
