@@ -18,9 +18,10 @@ CATEGORIAS = ["antes", "durante", "despues", "niveles"]
 
 def main(page: ft.Page):
     page.title = "Radical - Log Automator"
+    page.window_icon = "radical_logo.ico"
     page.theme_mode = ft.ThemeMode.DARK
     page.window_width = 600
-    page.window_height = 950 # Aumentamos un poco el alto para los nuevos botones
+    page.window_height = 950 
     page.scroll = "auto"
 
     with open(DATA_FILE, 'r', encoding='utf-8') as f:
@@ -47,7 +48,6 @@ def main(page: ft.Page):
     def on_template_result(e: ft.FilePickerResultEvent):
         if e.files:
             try:
-                # Reemplazamos la plantilla maestra con la nueva
                 shutil.copy(e.files[0].path, PLANTILLA)
                 lbl_status.value = f"Plantilla actualizada: {e.files[0].name}"
                 lbl_status.color = ft.colors.GREEN
@@ -65,7 +65,7 @@ def main(page: ft.Page):
 
     def open_reports_folder(e):
         if not os.path.exists(REPORTES_DIR): os.makedirs(REPORTES_DIR)
-        os.startfile(REPORTES_DIR) # Abre la carpeta en Windows
+        os.startfile(REPORTES_DIR)
 
     def clear_photos(e):
         for cat in CATEGORIAS:
@@ -157,7 +157,6 @@ def main(page: ft.Page):
             build_drop_zone("NIVELES", ft.colors.PURPLE, "niveles"),
         ]),
         ft.Divider(),
-        # Fila de utilidades finales
         ft.Row([
             ft.TextButton(
                 "Subir Plantilla", 
